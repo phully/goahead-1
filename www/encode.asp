@@ -315,7 +315,7 @@ $(document).ready(function()
 						<tr>
 	  				<td><span>Ö¡ÂÊ:</span></td>
 					<td>
-					  <select name = "frame_rate2" id="frame_rate2" style="width:100" onchange="" >
+					  <select name = "frame_rate2" id="frame_rate2" style="width:100" onchange="" onfocus="zl_before_change(2)">
 							<option value = "0" selected="">1</option>
 							<option value = "1">2</option>
 							<option value = "2">3</option>
@@ -468,7 +468,7 @@ $(document).ready(function()
 						<tr>
 	  				<td><span>Ö¡ÂÊ:</span></td>
 					<td>
-					  <select name = "frame_rate3" id="frame_rate3" style="width:100" onchange="" >
+					  <select name = "frame_rate3" id="frame_rate3" style="width:100" onchange="" onfocus="zl_before_change(4)">
 							<option value = "0" selected="">1</option>
 							<option value = "1">2</option>
 							<option value = "2">3</option>
@@ -619,7 +619,7 @@ $(document).ready(function()
 						<tr>
 	  				<td><span>Ö¡ÂÊ:</span></td>
 					<td>
-					  <select name = "frame_rate4" id="frame_rate4" style="width:100" onchange="" >
+					  <select name = "frame_rate4" id="frame_rate4" style="width:100" onchange="" onfocus="zl_before_change(4)">
 							<option value = "0" selected="">1</option>
 							<option value = "1">2</option>
 							<option value = "2">3</option>

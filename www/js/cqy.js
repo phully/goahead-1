@@ -1,4 +1,6 @@
 
+var G_zl = [1, 2, 3, 4, 5, 6, 10, 12, 13, 15, 20, 24, 25, 30, 50, 60];
+
 var G = {
 	single:{
 		s_1:["1080p",30],
@@ -524,16 +526,99 @@ function before_change (argument) {
   
 }
 
- 
+function zl_delete_g_arrs (g_arrs_a, argument) { //判断当前数组 编码部分是否与已选值匹配  ,匹配返回1, 否则0
+	//argument 第几路的编码
+
+  var select_arrs = select_value_arrs_a(argument);  //前面几路已选的设置 
+  
+  
+  for(var i = 0; i < (argument - 1); i++)
+	{
+		if(select_arrs[i*2] != g_arrs_a[i*2])
+		   return 0;   
+	}
+	 
+	for(var i = 0; i < (argument - 1); i++)
+	{
+		if(select_arrs[i*2 + 1] > g_arrs_a[i*2 + 1])
+		   return 0;   
+	}
+	
+	return 1;        
+}
+
+function zl_delete_now_arrs (arrs, argument) {	
+   var me = $('#definition'+argument+'').find("option:selected").text();
+   if (me == arrs[(argument - 1)*2])
+   	  return 1;
+   else
+   	  return 0;
+
+}
+
+function compare(a,b)   
+    {   
+        return b-a;   
+    }
+
+function zl_final_arrs (arrs, argument) {   //返回正确的选项最大值
+	//arrs 最终可选项
+	//argument  第几路的编码设置
+	var val_arrs = new Array();
+	
+	for(var i in arrs)
+	{
+		val_arrs.push(arrs[i][argument * 2 - 1]);
+	}
+  
+    val_arrs.sort(compare);
+    return val_arrs[0];
+  
+}
+
+function zl_get_option_arrs (argument) {  //返回正确的选项数组
+	//argument  第几路的编码设置
+  var arrs = get_G_arrs();
+  
+  /*******依赖前面选择去除不匹配项********/
+  for(var i in arrs)
+  {
+  	if(zl_delete_g_arrs(arrs[i] , argument) == 0)
+  	   delete arrs[i];
+  }
+  
+  /********根据当前项去除不匹配**********/
+  for(var i in arrs)
+  {
+  	if(zl_delete_now_arrs(arrs[i] , argument) == 0)
+  	   delete arrs[i];
+  }
+  
+  return zl_final_arrs(arrs, argument);
+
+}
+
+function zl_judg (argument) {
+   var arrs = G_zl;
+   for(var i = arrs.length - 1; 0 <= i ; i--)
+   {
+   	  if(argument < arrs[i])
+   	      arrs.pop();
+   }
+   return arrs;
+}
 
 function zl_before_change (argument) {
-	
-    var select_arrs = get_G_arrs();
+  
+    var arrs = zl_get_option_arrs (argument);
+    
+    var final_arrs = zl_judg(arrs);
+    
+    
     $('#frame_rate'+ argument + ' option').remove();
-    var arrs = new Array(1, 2, 3); //zl_get_option_arrs ();
-      
-	for(var i = 0; i < arrs.length; i++) {
-		$("#frame_rate"+ argument + "").append("<option value='" + i + "'>" + arrs[i] + "</option>");		
+    
+	for(var i = 0; i < final_arrs.length; i++) {
+		$("#frame_rate"+ argument + "").append("<option value='" + i + "'>" + final_arrs[i] + "</option>");		
 	};
 }
 
