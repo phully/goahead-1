@@ -2,6 +2,8 @@
 .Makefile.swp
 webs
 .project
+libwebs.a
+.gitignore.swp
 
 
 
