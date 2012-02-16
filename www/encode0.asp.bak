@@ -1,0 +1,130 @@
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+<title>Hunda IPcam</title>
+<link rel="stylesheet" type="text/css" href="./css/setting.css" />
+<script language="JavaScript" src="./js/AJAXInteraction.js"></script>
+<script language="JavaScript" src="./js/page.js"></script>
+<script type="text/javascript" src="./js/setup.js"></script>
+
+<script>	
+	function checkquality() 
+	{		
+		var exp= /^(?:0|[1-9][0-9]?|100)$/; 
+		obj=document.getElementById("quality").value 
+		var reg1 = obj.match(exp); 
+		if(reg1==null){
+			alert("您输入的质量参数不对(0-100)!");
+			return false;
+		}
+		else{
+			//alert("修改成功！");
+			return true;
+		}
+	}
+	
+	function judge()
+	{
+		checkquality();
+		document.getElementById("text_judge").value=1;
+		setEncode();
+	}
+	
+</script>
+
+</head>
+
+<body onload="getEncode()">
+<div id="formwrapper">
+	<div id="redbar"></div>
+	<div id="topbar">
+		<div id="topleft"></div>
+		<div id="topmiddle"></div>
+		<div id="topright">	
+		<div align='right'>
+			<br>
+			<span><b>
+			<a name="" href="./home.asp">视频预览</a>
+			<a name="" href="./network.asp">系统设置</a>
+			</b></span></div>
+		</div>
+	</div>
+	
+	<div id="iphone4s">
+	<!--just a wide red bar no details-->	
+	</div>
+
+	<div id="content">
+	
+<!--sidebar start-->
+<div class="sidebar">
+<div id="menu"> 
+
+<div class="navhead">网络设置</div>                        
+<div class="navcontent">
+<ul>
+<li class="menusub"><a href="./network.asp">有线网络</a></li>
+<!--<li class="menusub"><a href="./wifi.asp">无线网络</a></li>
+<li class="menusub"><a href="./pppoe.asp">PPPoE</a></li>
+<li class="menusub"><a href="./ddns.asp">动态域名</a></li>-->
+</ul>
+</div>			
+<div class="navhead">视频设置</div>                        
+<div class="navcontent">
+<ul>
+<li class="menusub"><a href="./encode.asp">编码设置1</a></li>
+<li class="menusub"><a href="./encode2.asp">编码设置2</a></li>
+<li class="menusub"><a href="./encode3.asp">编码设置3</a></li>
+<li class="menusub"><a href="./encode4.asp">编码设置4</a></li>
+<li class="menusub"><a href="./image.asp">图像质量</a></li>
+<li class="menusub"><a href="./osd.asp">OSD</a></li>
+<li class="menusub"><a href="./privacy.asp">隐私遮蔽</a></li>
+</ul>
+</div>
+<div class="navhead">其它设置</div>
+<div class="navcontent">
+<ul>
+<li class="menusub"><a href="./time.asp">时间设置</a></li>
+<li class="menusub"><a href="./alarm.asp">报警设置</a></li>
+<li class="menusub"><a href="./user.asp">用户管理</a></li>
+<li class="menusub"><a href="./upgrade.asp">维护升级</a></li>
+<li class="menusub"><a href="./syslog.asp">系统日志</a></li>
+</ul>
+</div>	                                  
+</div>
+</div>
+<!-- sidebar end-->
+<div id="sideset">
+<!--you code start-->
+		<br>
+			<h3>编码设置</h3>
+			<form action="/goform/setEncode" method="post" id="setEncodeId">		
+		
+
+			<B>编码类型:</B>
+			<select name = "type" id = "type" >
+				<option value="off">OFF
+				<option value="H264" selected>H.264
+				<option value="mjpeg">MJPEG</select>
+			<fieldset><!-- start h264 field -->
+			<legend>码流类型</legend>	
+        <div>
+        	<a href="./encode.asp">单码流</a>
+        	<a href="./encode2.asp">双码流</a>
+        	<a href="./encode3.asp">三码流</a>
+        	<a href="./encode4.asp">四码流</a>
+        </div>
+				</fieldset><!-- end h264 field -->
+			</form>
+<!--you code end-->
+			</div>
+
+			<div></div>
+			
+			</form>
+<!--4 end-->
+</div>
+</div>
+</div>
+</body>
+</html>

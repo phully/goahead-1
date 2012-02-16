@@ -1,0 +1,787 @@
+/*
+###############################################################
+# FileName      	: DbTblWebOpt.h
+# Version           : 3.0
+# Create			:
+# Function Describe : 系统数据表单处理函数
+# Modified 			: 
+###############################################################
+*/
+
+#include <locale.h>
+#include <signal.h>
+#include	"wsIntrn.h"
+#include  "DbTblWebOpt.h"
+#define  OSD_FIFO "/etc/ambaipcam/IPC_Q313/config/SourceBuffer.cfg"
+#define CFG_TEXTOSD	"/etc/ambaipcam/IPC_Q313/config/TextOSD.cfg"
+#define	WTA_TEXTOSD_SET	0x02
+#define N  0
+
+
+extern int setfifoimage( unsigned char Fifo_ID,unsigned char imgID,int imgvalue);
+
+
+#define	ROTATE_BIT		(0)
+#define	HFLIP_BIT		(1)
+#define	VFLIP_BIT		(2)
+#define	SET_BIT(x)		(1 << (x))
+#define MAX_ENCODE_STREAM_NUM	(4)
+#define MAX_OVERLAY_AREA_NUM	(3)
+#define STRING_SIZE				(255)
+
+
+typedef unsigned short 	    u16;/**< UNSIGNED 16-bit data type */
+typedef unsigned char  	    u8;	/**< UNSIGNED 8-bit data type */
+
+
+typedef struct textOSD_s 
+{
+	int stream_nb;	                   //码流号  
+	int area_nb;	                     //区域号
+	int enable;                        //是否允许 :0直接不  1：全部清空
+	
+  int type_osdtext;                  //字符类型 0：描述  1：时间
+  int x;                             //X的起始位置
+	int y;                             //Y的起始位置
+	int width;                         //显示区域宽度 
+	int height;                        //显示区域高度
+	
+	
+	int color;                         //颜色
+	int font_size;                     //字体大小
+	int outline;                       //外框
+	int bold;                          //黑体
+	int italic;                        //斜体
+
+	int rotate;                        //旋转方向	
+	char osdtext[255];                 //叠加字符
+}textOSD_t;
+
+
+
+typedef enum rotate_type_s {
+	CLOCKWISE_0 = 0,
+	CLOCKWISE_90 = SET_BIT(ROTATE_BIT),
+	CLOCKWISE_180 = SET_BIT(HFLIP_BIT) | SET_BIT(VFLIP_BIT),
+	CLOCKWISE_270 = SET_BIT(HFLIP_BIT) | SET_BIT(VFLIP_BIT) | SET_BIT(ROTATE_BIT),
+	AUTO_ROTATE,
+} rotate_type_t;
+
+typedef struct time_display_s {
+	int enable;
+	char time_string[STRING_SIZE];
+	int osd_x[STRING_SIZE];	/* Digit's offset x to the osd */
+	int osd_y[STRING_SIZE];	/* Digit's offset y to the osd */
+	int max_width;					/* Maximum width of 10 digits as bitmap
+									 * width in time display string. */
+	u8 *digits_addr;				/* Used to store 10 digits' bitmap data */
+	int digit_width;				/* One digit's width in digits_addr */
+	int digit_height;				/* One digit's height */
+} time_display_t;
+
+typedef struct textbox_s {                                 
+	int enable;                     //是否允许
+	u16 x;                          //X起始位置
+	u16 y;                          //Y起始位置
+	u16 width;                      //显示区域宽度
+	u16 height;                     //显示区域高度
+	
+	int color;                      //颜色
+	int font_type;                  //字体
+	int font_size;                  //字体大小
+	int outline;                    //外框
+	int bold;                       //黑体
+	int italic;                     //斜体
+	rotate_type_t rotate;           //旋转方向
+	wchar_t content[STRING_SIZE];
+	time_display_t time;
+} textbox_t;                                              //区域 
+
+
+typedef struct stream_text_info_s {                        
+	int enable;
+	int win_width;
+	int win_height;
+	rotate_type_t rotate;                                   //旋转方向
+	textbox_t textbox[MAX_OVERLAY_AREA_NUM];                //区域
+} stream_text_info_t;                                     //码流
+
+
+
+typedef struct wta_fifocmd_s
+{
+	unsigned char Cmdhead;		//0x0A
+	unsigned char Cmd_ver;		//0x01
+	unsigned char Cmd_ID;
+	unsigned char Cmd_Para[12];
+	unsigned char Cmd_check;	//0x00
+}	wta_fifocmd_t;
+
+
+
+static stream_text_info_t stream_text_info[MAX_ENCODE_STREAM_NUM];
+
+
+pid_t CreateProcess(char *pszProcName, char *pszParam[]);
+
+/******************************************************************************/
+
+/*                              ASP操作                                       */
+
+/******************************************************************************/
+// Get System Run Status
+int aspSysStatusDisplay(int eid, webs_t wp, int argc, char_t **argv)
+{
+	return 0;
+}
+
+
+/******************************************************************************/
+
+/*                              表单操作                                      */
+
+/******************************************************************************/
+
+/*
+ *读OSD配置信息
+ */
+/*----------------------------------------------------------------------------------------*/
+static int LoadTextOSDCFG()
+{
+	int CfgTextOSDfd;
+	unsigned char *dbTextOSD;
+	unsigned char filehead[2] = {0};
+	int len_file = 0,len_fileData = 0,len_fileHand = 0;
+	//----------------------------------------------------------------
+	if ((CfgTextOSDfd = open(CFG_TEXTOSD,O_RDONLY,S_IRUSR|S_IWUSR|S_IXUSR)) < 0)
+		printf(	"open CfgTextOSDfd file fail!\n");
+	
+	len_fileHand = 2;
+	
+	if(read(CfgTextOSDfd,filehead,len_fileHand) < 0)
+	{
+		printf ("read CfgTextOSDfd fail!\n");
+		close(CfgTextOSDfd);
+		return -1;
+	}
+	len_fileData = filehead[0]*256 + filehead[1];
+	printf("size of CfgTextOSDfd data:%d\n",len_fileData);
+	
+	if(len_fileData!=sizeof(stream_text_info))
+	{
+		close(CfgTextOSDfd);
+		return -1;
+	}
+	//len_file = len_fileData + len_fileHand;
+	dbTextOSD = malloc(len_fileData);
+	if(dbTextOSD == NULL)
+	{
+		printf("malloc dbTextOSD failed!\n");
+		return -1;
+	}
+	memset(dbTextOSD,0,len_fileData);
+	if(read(CfgTextOSDfd,dbTextOSD,len_fileData) < 0)
+	{
+		printf ("read CfgTextOSDfd fail!\n");
+		close(CfgTextOSDfd);
+		free(dbTextOSD);
+		return -1;
+	}
+	/*
+	int i =0;
+	for(i=0;i<20;i++)
+	{
+		printf("%x ",dbTextOSD[i]);
+	}
+	printf("\n");
+	*/
+	memset(&stream_text_info,0,len_fileData);
+	memcpy(&stream_text_info,dbTextOSD,len_fileData);
+	
+	close(CfgTextOSDfd);
+	free(dbTextOSD);
+	return 1;
+}
+
+
+/*
+ *保存OSD配置信息
+ */
+/*----------------------------------------------------------------------------------------*/
+static int SaveTextOSDCFG()
+{
+	int CfgTextOSDfd;
+	unsigned char *dbTextOSD;
+	int len_file = 0,len_fileData = 0,len_fileHand = 0;
+	//----------------------------------------------------------------
+	if ((CfgTextOSDfd = open(CFG_TEXTOSD,O_WRONLY|O_CREAT|O_APPEND|O_TRUNC,S_IRUSR|S_IWUSR|S_IXUSR)) < 0)
+		printf(	"open CfgTextOSDfd file fail!\n");
+	
+	len_fileData = sizeof(stream_text_info);
+	len_fileHand = 2;
+	len_file = len_fileHand+len_fileData;
+	
+	printf("size of fileData:%d\n",len_fileData);
+	
+	dbTextOSD = malloc(len_file);
+	if(dbTextOSD == NULL)
+	{
+		printf("malloc dbTextOSD failed!\n");
+		return -1;
+	}
+	
+	memset(dbTextOSD,0,len_file);
+	
+	dbTextOSD[0] = len_fileData/256;
+	dbTextOSD[1] = len_fileData%256;
+	printf("size of fileData1:%x fileData1:%x\n",dbTextOSD[0],dbTextOSD[1]);
+		
+	memcpy(dbTextOSD+len_fileHand,&stream_text_info,len_fileData);
+	
+	if(write(CfgTextOSDfd,dbTextOSD,len_file) < 0)
+	{
+		printf ("write CfgTextOSDfd fail!\n");
+		close(CfgTextOSDfd);
+		free(dbTextOSD);
+		return -1;
+	}
+	printf("done write CfgTextOSDfd!\n");
+	close(CfgTextOSDfd);
+	
+	/*
+	int i =0;
+	for(i=0;i<20;i++)
+	{
+		printf("%x ",dbTextOSD[i]);
+	}
+	printf("\n");
+	*/
+	free(dbTextOSD);
+	printf("done save CfgTextOSDfd!\n");
+	return 1;
+}
+
+FILE *osdfp;
+textOSD_t osd_t[4];
+
+void readOsd()                                                 //从二进制里读
+{
+	memset(&stream_text_info,0,sizeof(stream_text_info_t));
+  if((osdfp=fopen(CFG_TEXTOSD,"rb"))==NULL)
+	{
+		printf("can not open file \n");
+		return;
+	}
+	else
+	{	
+		fread(&stream_text_info,sizeof(stream_text_info_t)*MAX_ENCODE_STREAM_NUM,1,osdfp);
+	}
+	fclose(osdfp);
+}
+
+void writeOsd()                                         //从二进制里写入
+{
+	
+	if((osdfp=fopen(CFG_TEXTOSD,"wb"))==NULL)
+	{
+		printf("can not open file \n");
+		return;
+	}
+	else
+	{	
+		fwrite(&stream_text_info,sizeof(stream_text_info_t)*MAX_ENCODE_STREAM_NUM,1,osdfp);
+	}
+	fclose(osdfp);
+}
+
+
+static int char_to_wchar(const char* orig_str, wchar_t *wtext, int max_length)
+{
+	//add by shenbo
+	setlocale(LC_ALL, "zh_CN.utf8");
+		
+	if (-1 == mbstowcs(wtext, orig_str, max_length - 1))
+	{
+		printf("mbstowcs error!!!!!!\n");
+		return -1;
+	}
+	if (wcscat(wtext, L"") == NULL)
+	{
+		printf("wcscat error!!!!!!\n");
+		return -1;
+	}
+	return 0;
+}
+
+void Fifowrite()                                       //Fifo通信
+{
+	wta_fifocmd_t  fifcig_t;
+	fifcig_t.Cmdhead=0x0A;
+	fifcig_t.Cmd_ver=0x01;
+	fifcig_t.Cmd_ID=WTA_TEXTOSD_SET;
+	//fifcig_t.Cmd_Para=0x02;
+	fifcig_t.Cmd_check=0x00;
+	int real_wnum = 0;
+  int fifo_fd = open(OSD_FIFO,O_WRONLY,0);
+  printf("fifo: %d\n", fifo_fd);
+  if(fifo_fd)
+	  {
+    	real_wnum = write(fifo_fd,&fifcig_t,sizeof(fifcig_t));
+    	if(real_wnum==-1)
+        	printf("write to fifo error; try later real_wnum=%d\n",real_wnum);
+    	else 
+        	printf("real write num is %d\n",real_wnum);
+
+
+      close(fifo_fd);
+	 }
+	
+}
+
+
+void FormOSD(webs_t wp,char_t *path,char_t *query)
+{
+  
+	char_t *pszOperate = NULL;
+
+  char_t *pszTxt = NULL;
+  /*
+  char_t *pszSizet = NULL;
+  char_t *pszOutline = NULL;
+  char_t *pszBold = NULL;
+  char_t *pszItalic = NULL;
+  char_t *pszColor = NULL;
+  char_t *pszStartX = NULL;
+  char_t *pszStartY = NULL;
+  char_t *pszTimabl = NULL;
+  */
+	pszOperate = websGetVar(wp, T("Operate"), T(""));
+	
+	printf("OSD operate: %s\n", pszOperate);
+
+	// get osd para
+	if (0 == gstricmp(pszOperate, T("get"))) {
+		 
+		  
+			// Load Config
+	    LoadTextOSDCFG(); 
+			
+			printf("stream_nb1=%d\n",osd_t[0].stream_nb);
+			printf("area_nb=%d\n",osd_t[0].area_nb);
+			printf("pszTxt1=%s\n",stream_text_info[N].textbox[N].content);
+      printf("width=%d\n",stream_text_info[N].textbox[N].width);
+			printf("font_size=%d\n",stream_text_info[N].textbox[N].font_size);
+			printf("height=%d\n",stream_text_info[N].textbox[N].height);
+			printf("x=%d\n",stream_text_info[N].textbox[N].x);
+			printf("y=%d\n",stream_text_info[N].textbox[N].y);
+			printf("outline=%d\n",stream_text_info[N].textbox[N].outline);
+			printf("color=%d\n",stream_text_info[N].textbox[N].color);
+			printf("bold=%d\n",stream_text_info[N].textbox[N].bold);
+			printf("italic=%d\n",stream_text_info[N].textbox[N].italic);
+			printf("enable=%d\n",stream_text_info[N].textbox[N].enable);
+			printf("rotate=%d\n",stream_text_info[N].textbox[N].rotate);
+			
+				printf("stream_nb2=%s\n",stream_text_info[N].textbox[1].content);
+			printf("width2=%d\n",stream_text_info[N].textbox[1].width);
+			printf("font_size2=%d\n",stream_text_info[N].textbox[1].font_size);
+			printf("heigh2t=%d\n",stream_text_info[N].textbox[1].height);			
+			printf("x2=%d\n",stream_text_info[N].textbox[1].x);
+			printf("y2=%d\n",stream_text_info[N].textbox[1].y);			
+			printf("outline2=%d\n",stream_text_info[N].textbox[1].outline);
+			printf("color2=%d\n",stream_text_info[N].textbox[1].color);
+			printf("bold2=%d\n",stream_text_info[N].textbox[1].bold);
+			printf("italic2=%d\n",stream_text_info[N].textbox[1].italic);
+			printf("enable2=%d\n",stream_text_info[N].textbox[1].enable);
+			printf("rotate2=%d\n",stream_text_info[N].textbox[1].rotate);
+			
+			printf("stream_nb3=%s\n",stream_text_info[N].textbox[2].content);
+			printf("width3=%d\n",stream_text_info[N].textbox[2].width);
+			printf("font_size3=%d\n",stream_text_info[N].textbox[2].font_size);
+			printf("heigh3t=%d\n",stream_text_info[N].textbox[2].height);			
+			printf("x3=%d\n",stream_text_info[N].textbox[2].x);
+			printf("y3=%d\n",stream_text_info[N].textbox[2].y);			
+			printf("outline3=%d\n",stream_text_info[N].textbox[2].outline);
+			printf("color3=%d\n",stream_text_info[N].textbox[2].color);
+			printf("bold3=%d\n",stream_text_info[N].textbox[2].bold);
+			printf("italic3=%d\n",stream_text_info[N].textbox[2].italic);
+			printf("enable3=%d\n",stream_text_info[N].textbox[2].enable);
+			printf("rotate3=%d\n",stream_text_info[N].textbox[2].rotate);
+			
+			
+			websWrite(wp, T("HTTP/1.0 200 OK\n"));
+			websWrite(wp, T("Server: %s\r\n"), WEBS_NAME);
+			websWrite(wp, T("Pragma: no-cache\n"));
+			websWrite(wp, T("Cache-control: no-cache\n"));
+			websWrite(wp, T("Content-Type: text/xml\n"));
+			websWrite(wp, T("\n"));
+		
+			websWrite(wp, T("<?xml version='1.0' encoding='UTF-8'?>"));
+			websWrite(wp, T("<OSD>"));
+			websWrite(wp, T("<s1_text1>%s</s1_text1>"),stream_text_info[N].textbox[0].content);
+			websWrite(wp, T("<s1_text1_width>%d</s1_text1_width>"),stream_text_info[N].textbox[0].width);
+			websWrite(wp, T("<s1_text1_size>%d</s1_text1_size>"), stream_text_info[N].textbox[0].font_size);
+			websWrite(wp, T("<s1_text1_high>%d</s1_text1_high>"), stream_text_info[N].textbox[0].height);
+			websWrite(wp, T("<s1_text1_startx>%d</s1_text1_startx>"), stream_text_info[N].textbox[0].x);
+			websWrite(wp, T("<s1_text1_starty>%d</s1_text1_starty>"), stream_text_info[N].textbox[0].y);
+			websWrite(wp, T("<s1_text1_outline>%d</s1_text1_outline>"), stream_text_info[N].textbox[0].outline);
+			websWrite(wp, T("<s1_text1_color>%d</s1_text1_color>"), stream_text_info[N].textbox[0].color);
+			websWrite(wp, T("<s1_text1_bold>%d</s1_text1_bold>"), stream_text_info[N].textbox[0].bold);
+			websWrite(wp, T("<s1_text1_italic>%d</s1_text1_italic>"), stream_text_info[N].textbox[0].italic);
+			websWrite(wp, T("<s1_text1_type>%d</s1_text1_type>"), stream_text_info[N].textbox[0].enable);
+			websWrite(wp, T("<s1_text1_rotate>%d</s1_text1_rotate>"),stream_text_info[N].textbox[0].rotate);
+			
+			websWrite(wp, T("<s1_text2>%s</s1_text2>"), stream_text_info[N].textbox[1].content);
+			websWrite(wp, T("<s1_text2_width>%d</s1_text2_width>"), stream_text_info[N].textbox[1].width);
+			websWrite(wp, T("<s1_text2_size>%d</s1_text2_size>"),  stream_text_info[N].textbox[1].font_size);
+			websWrite(wp, T("<s1_text2_high>%d</s1_text2_high>"), stream_text_info[N].textbox[1].height);
+			websWrite(wp, T("<s1_text2_startx>%d</s1_text2_startx>"),  stream_text_info[N].textbox[1].x);
+			websWrite(wp, T("<s1_text2_starty>%d</s1_text2_starty>"),  stream_text_info[N].textbox[1].y);
+			websWrite(wp, T("<s1_text2_outline>%d</s1_text2_outline>"),  stream_text_info[N].textbox[1].outline);
+			websWrite(wp, T("<s1_text2_color>%d</s1_text2_color>"),  stream_text_info[N].textbox[1].color);
+			websWrite(wp, T("<s1_text2_bold>%d</s1_text2_bold>"),  stream_text_info[N].textbox[1].bold);
+			websWrite(wp, T("<s1_text2_italic>%d</s1_text2_italic>"),  stream_text_info[N].textbox[1].italic);
+			websWrite(wp, T("<s1_text2_type>%d</s1_text2_type>"),  stream_text_info[N].textbox[1].enable);
+			websWrite(wp, T("<s1_text2_rotate>%d</s1_text2_rotate>"),  stream_text_info[N].textbox[1].rotate);
+			
+			websWrite(wp, T("<s1_text3>%s</s1_text3>"), stream_text_info[N].textbox[2].content);
+			websWrite(wp, T("<s1_text3_width>%d</s1_text3_width>"), stream_text_info[N].textbox[2].width);
+			websWrite(wp, T("<s1_text3_size>%d</s1_text3_size>"),  stream_text_info[N].textbox[2].font_size);
+			websWrite(wp, T("<s1_text3_high>%d</s1_text3_high>"), stream_text_info[N].textbox[2].height);
+			websWrite(wp, T("<s1_text3_startx>%d</s1_text3_startx>"),  stream_text_info[N].textbox[2].x);
+			websWrite(wp, T("<s1_text3_starty>%d</s1_text3_starty>"),  stream_text_info[N].textbox[2].y);
+			websWrite(wp, T("<s1_text3_outline>%d</s1_text3_outline>"),  stream_text_info[N].textbox[2].outline);
+			websWrite(wp, T("<s1_text3_color>%d</s1_text3_color>"),  stream_text_info[N].textbox[2].color);
+			websWrite(wp, T("<s1_text3_bold>%d</s1_text3_bold>"),  stream_text_info[N].textbox[2].bold);
+			websWrite(wp, T("<s1_text3_italic>%d</s1_text3_italic>"),  stream_text_info[N].textbox[2].italic);
+			websWrite(wp, T("<s1_text3_type>%d</s1_text3_type>"),  stream_text_info[N].textbox[2].enable);
+			websWrite(wp, T("<s1_text3_rotate>%d</s1_text3_rotate>"),  stream_text_info[N].textbox[2].rotate);
+						
+			websWrite(wp, T("</OSD>"));
+			websDone(wp, 200);
+	}
+	// set osd
+	else if (0 == gstricmp(pszOperate, T("set")))
+ {
+		char_t *pszJudge = NULL;
+		int nRet = 0;
+		
+		pszJudge=websGetVar(wp, T("text_judge"), T("")); 
+	  printf("ttttt%s\n",pszJudge);
+	  memset(&osd_t,0,sizeof(textOSD_t));
+	  
+	  // Load Config
+	  LoadTextOSDCFG();
+	  
+	  if (0 == gstricmp(pszJudge, T("1")))
+		{			
+			pszTxt=websGetVar(wp, T("s1_text1"), T(""));
+			 
+			nRet = char_to_wchar(pszTxt, stream_text_info[N].textbox[0].content, sizeof(stream_text_info[N].textbox[0].content));
+			if (0 > nRet) {
+				printf("Convert to wchar failed. Use default string.\n");
+				memset(stream_text_info[N].textbox[0].content, 0,sizeof(stream_text_info[N].textbox[0].content));
+			}
+			stream_text_info[N].textbox[0].enable = 1;
+			stream_text_info[N].textbox[0].width=gatoi(websGetVar(wp, T("s1_text1_width"), T("")));
+			stream_text_info[N].textbox[0].font_size=gatoi(websGetVar(wp, T("s1_text1_size"), T("")));
+			stream_text_info[N].textbox[0].height=gatoi(websGetVar(wp, T("s1_text1_high"), T("")));
+			stream_text_info[N].textbox[0].x=gatoi(websGetVar(wp, T("s1_text1_startx"), T("")));
+			stream_text_info[N].textbox[0].y=gatoi(websGetVar(wp, T("s1_text1_starty"), T("")));
+			stream_text_info[N].textbox[0].outline=gatoi(websGetVar(wp, T("s1_text1_outline"), T("")));
+			stream_text_info[N].textbox[0].color=gatoi(websGetVar(wp, T("s1_text1_color"), T("")));
+			stream_text_info[N].textbox[0].bold=gatoi(websGetVar(wp, T("s1_text1_bold"), T("")));
+			stream_text_info[N].textbox[0].italic=gatoi(websGetVar(wp, T("s1_text1_italic"), T("")));
+			//stream_text_info[N].textbox[0].enable=gatoi(websGetVar(wp, T("s1_text1_type"), T("")));
+			stream_text_info[N].textbox[0].rotate=gatoi(websGetVar(wp, T("s1_text1_rotate"), T("")));
+			
+			osd_t[0].enable=gatoi(websGetVar(wp, T("text_clean"), T("")));
+			printf("No___1\n");
+			printf("stream_nb1=%d\n",osd_t[0].stream_nb);
+			printf("area_nb=%d\n",osd_t[0].area_nb);
+			printf("pszTxt1=%s\n",stream_text_info[N].textbox[0].content);
+
+      printf("width=%d\n",stream_text_info[N].textbox[0].width);
+			printf("font_size=%d\n",stream_text_info[N].textbox[0].font_size);
+			printf("height=%d\n",stream_text_info[N].textbox[0].height);
+			printf("x=%d\n",stream_text_info[N].textbox[0].x);
+			printf("y=%d\n",stream_text_info[N].textbox[0].y);
+			printf("outline=%d\n",stream_text_info[N].textbox[0].outline);
+			printf("color=%d\n",stream_text_info[N].textbox[0].color);
+			printf("bold=%d\n",stream_text_info[N].textbox[0].bold);
+			printf("italic=%d\n",stream_text_info[N].textbox[0].italic);
+			printf("enable=%d\n",stream_text_info[N].textbox[0].enable);
+			printf("rotate=%d\n",stream_text_info[N].textbox[0].rotate);
+
+    }  
+    
+    if (0 == gstricmp(pszJudge, T("2")))
+		{
+			pszTxt=websGetVar(wp, T("s1_text2"), T(""));
+			nRet = char_to_wchar(pszTxt, stream_text_info[N].textbox[1].content, sizeof(stream_text_info[N].textbox[1].content));
+			if (0 > nRet) {
+				printf("Convert to wchar failed. Use default string.\n");
+				memset(stream_text_info[N].textbox[1].content, 0,sizeof(stream_text_info[N].textbox[1].content));
+			}
+			stream_text_info[N].textbox[1].enable = 1;
+			stream_text_info[N].textbox[1].width=gatoi(websGetVar(wp, T("s1_text2_width"), T("")));
+			stream_text_info[N].textbox[1].font_size=gatoi(websGetVar(wp, T("s1_text2_size"), T("")));
+			stream_text_info[N].textbox[1].height=gatoi(websGetVar(wp, T("s1_text2_high"), T("")));
+			stream_text_info[N].textbox[1].x=gatoi(websGetVar(wp, T("s1_text2_startx"), T("")));
+			stream_text_info[N].textbox[1].y=gatoi(websGetVar(wp, T("s1_text2_starty"), T("")));
+			stream_text_info[N].textbox[1].outline=gatoi(websGetVar(wp, T("s1_text2_outline"), T("")));
+			stream_text_info[N].textbox[1].color=gatoi(websGetVar(wp, T("s1_text2_color"), T("")));
+			stream_text_info[N].textbox[1].bold=gatoi(websGetVar(wp, T("s1_text2_bold"), T("")));
+			stream_text_info[N].textbox[1].italic=gatoi(websGetVar(wp, T("s1_text2_italic"), T("")));
+			stream_text_info[N].textbox[1].enable=gatoi(websGetVar(wp, T("s1_text2_type"), T("")));
+			stream_text_info[N].textbox[1].rotate=gatoi(websGetVar(wp, T("s1_text2_rotate"), T("")));
+			osd_t[0].enable=gatoi(websGetVar(wp, T("text_clean"), T("")));
+			#if 0
+			printf("No___2\n");
+			printf("stream_nb2=%s\n",stream_text_info[N].textbox[1].content);
+			printf("width2=%d\n",stream_text_info[N].textbox[1].width);
+			printf("font_size2=%d\n",stream_text_info[N].textbox[1].font_size);
+			printf("heigh2t=%d\n",stream_text_info[N].textbox[1].height);			
+			printf("x2=%d\n",stream_text_info[N].textbox[1].x);
+			printf("y2=%d\n",stream_text_info[N].textbox[1].y);			
+			printf("outline2=%d\n",stream_text_info[N].textbox[1].outline);
+			printf("color2=%d\n",stream_text_info[N].textbox[1].color);
+			printf("bold2=%d\n",stream_text_info[N].textbox[1].bold);
+			printf("italic2=%d\n",stream_text_info[N].textbox[1].italic);
+			printf("enable2=%d\n",stream_text_info[N].textbox[1].enable);
+			printf("rotate2=%d\n",stream_text_info[N].textbox[1].rotate);	
+			#endif
+    }    
+    
+    if (0 == gstricmp(pszJudge, T("3")))
+		{			
+			pszTxt=websGetVar(wp, T("s1_text3"), T(""));
+			nRet = char_to_wchar(pszTxt, stream_text_info[N].textbox[2].content, sizeof(stream_text_info[N].textbox[2].content));
+			if (0 > nRet) {
+				printf("Convert to wchar failed. Use default string.\n");
+				memset(stream_text_info[N].textbox[2].content, 0,sizeof(stream_text_info[N].textbox[2].content));
+			}
+			stream_text_info[N].textbox[2].enable = 1;
+			stream_text_info[N].textbox[2].width=gatoi(websGetVar(wp, T("s1_text3_width"), T("")));
+			stream_text_info[N].textbox[2].font_size=gatoi(websGetVar(wp, T("s1_text3_size"), T("")));
+			stream_text_info[N].textbox[2].height=gatoi(websGetVar(wp, T("s1_text3_high"), T("")));
+			stream_text_info[N].textbox[2].x=gatoi(websGetVar(wp, T("s1_text3_startx"), T("")));
+			stream_text_info[N].textbox[2].y=gatoi(websGetVar(wp, T("s1_text3_starty"), T("")));
+			stream_text_info[N].textbox[2].outline=gatoi(websGetVar(wp, T("s1_text3_outline"), T("")));
+			stream_text_info[N].textbox[2].color=gatoi(websGetVar(wp, T("s1_text3_color"), T("")));
+			stream_text_info[N].textbox[2].bold=gatoi(websGetVar(wp, T("s1_text3_bold"), T("")));
+			stream_text_info[N].textbox[2].italic=gatoi(websGetVar(wp, T("s1_text3_italic"), T("")));
+			stream_text_info[N].textbox[2].enable=gatoi(websGetVar(wp, T("s1_text3_type"), T("")));
+			stream_text_info[N].textbox[2].rotate=gatoi(websGetVar(wp, T("s1_text3_rotate"), T("")));
+			osd_t[0].enable=gatoi(websGetVar(wp, T("text_clean"), T("")));
+			#if 0
+			printf("No___2\n");
+			printf("stream_nb3=%s\n",stream_text_info[N].textbox[2].content);
+			printf("width3=%d\n",stream_text_info[N].textbox[2].width);
+			printf("font_size3=%d\n",stream_text_info[N].textbox[2].font_size);
+			printf("heigh3t=%d\n",stream_text_info[N].textbox[2].height);			
+			printf("x3=%d\n",stream_text_info[N].textbox[2].x);
+			printf("y3=%d\n",stream_text_info[N].textbox[2].y);			
+			printf("outline3=%d\n",stream_text_info[N].textbox[2].outline);
+			printf("color3=%d\n",stream_text_info[N].textbox[2].color);
+			printf("bold3=%d\n",stream_text_info[N].textbox[2].bold);
+			printf("italic3=%d\n",stream_text_info[N].textbox[2].italic);
+			printf("enable3=%d\n",stream_text_info[N].textbox[2].enable);
+			printf("rotate3=%d\n",stream_text_info[N].textbox[2].rotate);
+			#endif
+    }    
+    
+    // Save config
+    SaveTextOSDCFG();
+    setfifoimage(WTA_TEXTOSD_SET,0,0);
+    // Send Fifo to 
+    //SendFifo(0x01, 0x02, 0);
+    
+		websWrite(wp,T("123"));	
+		websDone(wp, 200);
+	}
+}
+
+
+// Privacy Mask
+void FormPrivacy(webs_t wp,char_t *path,char_t *query)
+{
+	char_t *pszOperate = NULL;
+
+	char_t *pszColorY = NULL;
+	char_t *pszColorU 	 = NULL;
+	char_t *pszColorV = NULL;
+	char_t *pszPosX 	 = NULL;
+	char_t *pszPosY  = NULL;
+	char_t *pszWidth   = NULL;
+	char_t *pszHeight  = NULL;
+
+	pszOperate = websGetVar(wp, T("Operate"), T(""));
+	
+	printf("Prvacy mask operate: %s\n", pszOperate);
+
+	// get privacy para
+	if (0 == gstricmp(pszOperate, T("get"))) {
+		  printf("get\n");
+			websWrite(wp, T("HTTP/1.0 200 OK\n"));
+			websWrite(wp, T("Server: %s\r\n"), WEBS_NAME);
+			websWrite(wp, T("Pragma: no-cache\n"));
+			websWrite(wp, T("Cache-control: no-cache\n"));
+			websWrite(wp, T("Content-Type: text/xml\n"));
+			websWrite(wp, T("\n"));
+			
+			websWrite(wp, T("<?xml version='1.0' encoding='UTF-8'?>"));
+			websWrite(wp, T("<PrivacyMask>"));
+			websWrite(wp, T("<ColorY>%s</ColorY>"), pszColorY);
+			websWrite(wp, T("<ColorU>%s</ColorU>"), pszColorU);
+			websWrite(wp, T("<ColorV>%s</ColorV>"), pszColorV);
+			websWrite(wp, T("<PosX>%s</PosX>"),     pszPosX);
+			websWrite(wp, T("<PosY>%s</PosY>"),     pszPosY);
+			websWrite(wp, T("<Width>%s</Width>"),   pszWidth);
+			websWrite(wp, T("<Height>%s</Height>"), pszHeight);
+			websWrite(wp, T("</PrivacyMask>"));
+			websDone(wp, 200);
+	}
+	// set or del privacy mask
+	else if (0 == gstricmp(pszOperate, T("set")) ||
+					 0 == gstricmp(pszOperate, T("del"))) {
+		char szParam[20][20] = {"0"};
+
+		pszColorY = websGetVar(wp, T("ColorY"), T(""));
+		pszColorU = websGetVar(wp, T("ColorU"), T(""));
+		pszColorV = websGetVar(wp, T("ColorV"), T(""));
+		pszPosX   = websGetVar(wp, T("PosX"), T(""));
+		pszPosY   = websGetVar(wp, T("PosY"), T(""));
+		pszWidth  = websGetVar(wp, T("Width"), T(""));
+		pszHeight = websGetVar(wp, T("Height"), T(""));
+		
+		printf("ColorY: %s\n", pszColorY);
+		printf("ColorU: %s\n", pszColorU);
+		printf("ColorV: %s\n", pszColorV);
+		printf("PosX:   %s\n", pszPosX);
+		printf("PosY:   %s\n", pszPosY);
+		printf("Width:  %s\n", pszWidth);
+		printf("Height: %s\n", pszHeight);
+		
+		int nIdx = 0;
+		sprintf(szParam[nIdx++], "test_privacymask");
+		sprintf(szParam[nIdx++], "-x%s", pszPosX);
+		sprintf(szParam[nIdx++], "-y%s", pszPosX);
+		sprintf(szParam[nIdx++], "-w%s", pszWidth);
+		sprintf(szParam[nIdx++], "-h%s", pszHeight);
+		sprintf(szParam[nIdx++], "-Y%s", pszColorY);
+		sprintf(szParam[nIdx++], "-U%s", pszColorU);
+		sprintf(szParam[nIdx++], "-V%s", pszColorV);
+		
+		if (0 == gstricmp(pszOperate, T("del"))) {
+			sprintf(szParam[nIdx++], "-d");
+		}
+
+		char *szTmp[20] = {NULL};
+		
+		int i = 0;
+		for (i = 0; i < nIdx; i++) {
+			szTmp[i] = szParam[i];
+		}
+		szTmp[nIdx] = NULL;
+		CreateProcess("test_privacymask", szTmp);
+		
+		websWrite(wp,T("0"));	
+		websDone(wp, 200);
+	}
+	else if (0 == gstricmp(pszOperate, T("clear"))) {
+		char *pszParam[] = {"test_privacymask", "--disable", NULL};
+		
+		CreateProcess("test_privacymask", pszParam);
+		
+		websWrite(wp,T("0"));	
+		websDone(wp, 200);
+	}
+}
+/**************************************************************
+函数功能：创建执行子进程
+
+参数：
+
+(入口)
+char *pszProcName            进程执行命令名称
+
+(出口)
+无
+
+返回：子进程ID号: < 0 -- 失败, > 0 -- 成功.
+
+主要思路：
+1、创建子进程,如果成功则子进程自动运行
+
+创建日期: 2010.06.25
+Author:   lgh
+****************************************************************/
+pid_t CreateProcess(char *pszProcName, char *pszParam[])
+{
+	pid_t nPID = 0;
+	char szProcPath[512] = {0};
+	
+	sprintf(szProcPath, "/usr/local/bin/%s", pszProcName);
+	//sprintf(szProcPath, "%s", pszProcName);
+#if 0
+	getcwd(szDir, sizeof(szDir)); 
+	sprintf(szProcPath, "%s/%s", szDir, pszProcName);
+	printf("Process Run Path: %s\n", szProcPath);
+	#endif
+
+	// 设置不等待子进程退出信息
+	signal(SIGCLD, SIG_IGN);
+	nPID = fork();
+	if (nPID == 0) {
+#if 0
+		// Set current working directory
+		strcat(szDir, "/");
+		strcat(szDir, pszProcName);
+		if ((pTmp = strrchr(szDir, '/'))) {
+			*pTmp = '\0';
+			if (0 > chdir(szDir)) {
+				perror("chdir");
+			}
+		}
+#endif
+		int i = 0;
+		while (pszParam[i] != NULL) {
+			printf("Param: %s\n", pszParam[i]);
+			i++;
+		}
+		if (-1 == execv(szProcPath, pszParam)) {
+			printf("execv %s failed: %s\n", szProcPath, strerror(errno));
+			exit(errno);
+		};
+
+		exit(EXIT_SUCCESS);
+	}
+	else if (nPID < 0) {
+		/* The fork failed. Report failure. */
+		printf("Create Process %s Failed.\n", szProcPath);
+	}
+	else {
+		printf("Create Process %s Success.\n", szProcPath);
+	}
+
+	return nPID;
+}
+
+// System Operate
+void FormSystem(webs_t wp,char_t *path,char_t *query)
+{
+	char_t *pszOperate = NULL;
+
+	pszOperate = websGetVar(wp, T("Operate"), T(""));
+	
+	printf("Prvacy mask operate: %s\n", pszOperate);
+
+	// get privacy para
+	if (0 == gstricmp(pszOperate, T("reboot"))) {
+			
+			system("reboot");
+			
+			websWrite(wp, T("</PrivacyMask>"));
+			websDone(wp, 200);
+	}
+}

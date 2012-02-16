@@ -1,0 +1,383 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+<title>Hunda IPcam</title>
+<link rel="stylesheet" type="text/css" href="./css/setting.css" />
+<script language="JavaScript" src="./js/AJAXInteraction.js"></script>
+<script type="text/JavaScript" src="./js/slider.js"></script>
+<script type="text/javascript" src="./js/setup.js"></script>
+<script type="text/javascript" src="./js/jquery-1.2.2.pack.js" ></script>
+
+    
+
+<style>
+.sidebtn {
+	background: url(./img/list.gif) no-repeat top left;
+	height: 16px;
+	margin: 0 auto;
+	position: relative;
+	top: 0px;
+}
+
+.sidebtn.on {
+	background: url(./img/fold.gif) no-repeat top left;
+	height: 16px;
+	margin: 0 auto;
+	position: relative;
+	top: 0px;
+}
+</style>
+<script>		
+$(document).ready(function () {
+	  $('.sidebtn').click(function () {
+	  	if ($(this).hasClass("on")) {
+  			$(this).removeClass("on");
+ 			}else{
+  			$(this).addClass("on");
+			}
+			
+	  	$(this).next("div").slideToggle();
+    });
+});
+</script>
+
+<script language="JavaScript">
+	var A_STYLE = {
+		'b_vertical' : false,
+		'b_watch': true,
+		'n_controlWidth': 120,
+		'n_controlHeight': 16,
+		'n_sliderWidth': 16,
+		'n_sliderHeight': 15,
+		'n_pathLeft' : 1,
+		'n_pathTop' : 1,
+		'n_pathLength' : 103,
+		's_imgControl': 'img/sldr1v_bg.gif',
+		's_imgSlider': 'img/sldr1v_sl.gif',
+		'n_zIndex': 1
+	}
+	var A_INIT1h = {
+		's_form' : 0,
+		's_name': 'Hue',
+		'n_minValue' : 0,
+		'n_maxValue' : 30,
+		'n_value' : 10,
+		'n_step' : 1
+	}
+	var A_INIT2h = {
+		's_form' : 0,
+		's_name': 'Bright',
+		'n_minValue' : 0,
+		'n_maxValue' : 254,
+		'n_value' : 10,
+		'n_step' : 1
+	}
+	var A_INIT3h = {
+		's_form' : 0,
+		's_name': 'Sharp',
+		'n_minValue' : 0,
+		'n_maxValue' : 254,
+		'n_value' : 10,
+		'n_step' : 1
+	}
+	var A_INIT4h = {
+		's_form' : 0,
+		's_name': 'Denoise',
+		'n_minValue' : 0,
+		'n_maxValue' : 254,
+		'n_value' : 10,
+		'n_step' : 1
+	}
+	var A_INIT5h = {
+		's_form' : 0,
+		's_name': 'Contrast',
+		'n_minValue' : 0,
+		'n_maxValue' : 254,
+		'n_value' : 10,
+		'n_step' : 1
+	}
+	var A_INIT6h = {
+		's_form' : 0,
+		's_name': 'Saturation',
+		'n_minValue' : 0,
+		'n_maxValue' : 254,
+		'n_value' : 10,
+		'n_step' : 1
+	}
+</script>
+<script>
+function init()
+	{
+		getImage();
+		OnLoadActiveX(location.host, 0, 1, 0, 1);
+	}	
+	
+
+function num(imgmax,imgdefault)
+{
+	var i=120,result;
+	result=(120*imgdefault)/imgmax;        //滑动条的长度*当前的值/当前元素的最大值
+	return result;
+}
+	
+function defaultImg()
+{
+	var Hue=document.getElementById("Hue").value="0";
+	var Bright=document.getElementById("Bright").value="8";
+	var Sharp=document.getElementById("Sharp").value="128";
+	var Denoise=document.getElementById("Denoise").value="0";
+	var Contrast=document.getElementById("Contrast").value="40";
+	var Saturation=document.getElementById("Saturation").value="90";
+  
+  //滑动条的长度为120，Hue的最大值为30而用JQ算的是长度。。
+  $("#sl0slider").css("left",num(30,Hue));         
+  $("#sl1slider").css("left",num(255,Bright));  
+  $("#sl2slider").css("left",num(255,Sharp));
+  $("#sl3slider").css("left",num(255,Denoise));
+  $("#sl4slider").css("left",num(255,Contrast));
+  $("#sl5slider").css("left",num(255,Saturation));
+	
+	document.getElementById("exposure_mode").value="0";
+	document.getElementById("exposure_level").value="0";
+	document.getElementById("backlight").value="0";
+	document.getElementById("screen_blink").value="0";
+	document.getElementById("shutter_min").value="4";
+	document.getElementById("shutter_max").value="10";	
+	document.getElementById("slow_shutter").value="0";	
+	setImgDefaultFifo();
+	
+	
+	
+	
+	
+}
+</script>
+
+</head>
+
+<body onload="init()">
+<div id="formwrapper">
+	<div id="redbar"></div>
+	<div id="topbar">
+		<div id="topleft"></div>
+		<div id="topmiddle"></div>
+		<div id="topright">	
+		<div align='right'>
+			<br>
+			<span><b>
+			<a name="" href="./home.asp">视频预览</a>
+			<a name="" href="./network.asp">系统设置</a>
+			</b></span></div>
+		</div>
+	</div>
+	
+	<div id="topline">
+	<!--just a wide red bar no details-->	
+	</div>
+
+	<div id="content">
+
+<!--sidebar start-->
+<div class="sidebar">
+<div id="menu"> 
+
+<div class="navhead">网络设置</div>                        
+<div class="navcontent">
+<ul>
+<li class="menusub"><a href="./network.asp">有线网络</a></li>
+<!--
+<li class="menusub"><a href="./wifi.asp">无线网络</a></li>
+<li class="menusub"><a href="./pppoe.asp">PPPoE</a></li>
+<li class="menusub"><a href="./ddns.asp">动态域名</a></li>
+-->
+</ul>
+</div>			
+<div class="navhead">视频设置</div>                        
+<div class="navcontent">
+<ul>
+<li class="menusub"><a href="./encode1.asp">编码设置</a></li>
+<li class="menusub"><a href="./image.asp">图像质量</a></li>
+<li class="menusub"><a href="./osd.asp">OSD</a></li>
+<li class="menusub"><a href="./privacy.asp">隐私遮蔽</a></li>
+<!--<li class="menusub"><a href="./vinvout.asp">输入输出</a></li>-->
+</ul>
+</div>
+<div class="navhead">其它设置</div>
+<div class="navcontent">
+<ul>
+<li class="menusub"><a href="./time.asp">时间设置</a></li>
+<li class="menusub"><a href="./alarm.asp">报警设置</a></li>
+<li class="menusub"><a href="./user.asp">用户管理</a></li>
+<li class="menusub"><a href="./upgrade.asp">维护升级</a></li>
+<li class="menusub"><a href="./syslog.asp">系统日志</a></li>
+</ul>
+</div>	                                  
+</div>
+</div>
+<!-- sidebar end-->
+
+<div id="sideset">
+		
+<!--you code start-->
+		<br>
+			<h3>设置视频叠加OSD的参数</h3>
+			<OBJECT CLASSID="CLSID:3BCDAA6A-7306-42FF-B8CF-BE5D3534C1E4" codebase="./activeX/ambaWeb.cab#version=1,0,0,32" WIDTH=480 HEIGHT=310 align="absmiddle" id="AmbaIPCmrWebPlugIn1">
+										<PARAM NAME="_Version" VALUE="65536">
+										<PARAM NAME="_ExtentX" VALUE="19045">
+										<PARAM NAME="_ExtentY" VALUE="11478">
+										<PARAM NAME="_StockProps" VALUE="0">
+			</OBJECT>
+	
+	<fieldset>
+			<legend>色彩设置</legend>
+  			<p class="sidebtn"></p>
+				<div id="isOpened" style="display:none">
+				<form action="" method="get" name="demoForm">
+          <table width="50%" cellpadding="0" cellspacing="0" id="table">
+				   <tr>
+						<td>色度:</td>
+						<td><input name="sliderValue" id="Hue" type="Text" size="3" onchange="A_SLIDERS[0].f_setValue(this.value)"></td>
+						<td><script language="JavaScript">new slider(A_INIT1h, A_STYLE);</script></td>						
+						</tr>         
+						<tr>
+						<td>亮度:</td>
+						<td><input name="sliderValue" id="Bright" type="Text" size="3" onchange="A_SLIDERS[1].f_setValue(this.value)"></td>
+						<td><script language="JavaScript">new slider(A_INIT2h, A_STYLE);</script></td>						
+						</tr>
+						<tr>
+						<td>清晰度:</td>
+						<td><input name="sliderValue" id="Sharp" type="Text" size="3" onchange="A_SLIDERS[2].f_setValue(this.value)"></td>
+						<td><script language="JavaScript">new slider(A_INIT3h, A_STYLE);</script></td>					
+						</tr>   
+						<tr>
+						<td>降&nbsp&nbsp&nbsp&nbsp噪:</td>
+						<td><input name="sliderValue" id="Denoise" type="Text" size="3" onchange="A_SLIDERS[3].f_setValue(this.value)"></td>
+						<td><script language="JavaScript">new slider(A_INIT4h, A_STYLE);</script></td>
+						</tr>  
+						<tr>
+						<td>对比度:</td>
+						<td><input name="sliderValue" id="Contrast" type="Text" size="3" onchange="A_SLIDERS[4].f_setValue(this.value)"></td>
+						<td><script language="JavaScript">new slider(A_INIT5h, A_STYLE);</script></td>
+						</tr>   
+						<tr>
+						<td>饱和度:</td>
+						<td><input name="sliderValue" id="Saturation" type="Text" size="3" onchange="A_SLIDERS[5].f_setValue(this.value)"></td>
+						<td><script language="JavaScript">new slider(A_INIT6h, A_STYLE);</script></td>
+						</tr>
+						<tr>
+						<td><input type="button" value="恢复默认"  onclick="defaultImg()"/></td>						
+						</tr>		
+				</table>
+				
+				</div>
+			</fieldset>
+			
+			
+<fieldset>
+	<legend>曝光设置</legend>
+  	<p class="sidebtn"></p>
+			<div id="isOpened" style="display:none">
+				<form action="" method="get" name="demoForm">
+         <table >
+         	<tr>
+				   <td><span>曝光模式:</span></td>
+					 <td>
+						<select id="exposure_mode" style="width:80">
+						 <option value="0" selected="">中心测光 </option>
+						 <option value="1">中央测光 </option>
+						 <option value="2">平均测光 </option>
+						</select>
+					 </td>	
+					 <td colspan=""><input type="button" value="应用" onclick="setImage()"/></td>	
+					</tr>
+					<tr>				 
+					 <td><span>曝光补偿:</span></td>
+					 <td>
+						<select id="exposure_level" style="width:80">
+						 <option value="0" selected="">-3</option>
+						 <option value="1">-2</option>
+						 <option value="2">-1</option>
+						 <option value="3">0</option>
+						 <option value="4">1</option>
+						 <option value="5">2</option>
+						 <option value="6">3</option>
+						 <option value="7">4</option>
+						</select>
+					 </td>
+					 <td colspan=""><input type="button" value="应用" onclick="setImage()"/></td>										 
+					</tr>
+					<tr>
+				  	<td><span>背光补偿:</span></td>
+				  	<td>
+						<select id="backlight" style="width:80">
+						 <option value="0" selected="">关闭</option>
+						 <option value="1">打开</option>
+						</select>
+					 </td>
+					  <td colspan=""><input type="button" value="应用" onclick="setImage()"/></td>			
+					</tr>
+					<tr>										
+					 <td><span>频闪:</span></td>
+				  	<td>
+						<select id="screen_blink" style="width:80">
+						 <option value="0" selected="">50HZ</option>
+						 <option value="1">60HZ</option>
+						</select>
+					 </td>
+					 <td colspan=""><input type="button" value="应用" onclick="setImage()"/></td>							
+				  </tr>				
+					<td><span>最慢:</span></td>
+					<td>
+						<select id="shutter_min" style="width:80">
+						 <option value="0" selected="">1/25</option>
+						 <option value="1">1/30</option>
+						 <option value="2">1/50</option>
+						 <option value="3">1/60</option>
+						 <option value="4">1/100</option>
+						 <option value="5">1/120</option>
+						 <option value="6">1/240</option>
+						 <option value="7">1/480</option>
+						 <option value="8">1/960</option>
+						 <option value="9">1/1024</option>
+						</select>
+					 </td>											
+					 <td><span>最快:</span></td>
+					<td>
+						<select id="shutter_max" style="width:80">
+						 <option value="0" selected="">1/25</option>
+						 <option value="1">1/30</option>
+						 <option value="2">1/50</option>
+						 <option value="3">1/60</option>
+						 <option value="4">1/100</option>
+						 <option value="5">1/120</option>
+						 <option value="6">1/240</option>
+						 <option value="7">1/480</option>
+						 <option value="8">1/960</option>
+						 <option value="9">1/1024</option>
+						 <option value="10">1/8000</option>
+						</select>
+					 </td>							
+				  </tr>
+				  <tr>
+				  	<td><span>慢速快门:</span></td>
+				  	<td>
+						<select id="slow_shutter" style="width:80">
+						 <option value="0" selected="">关闭</option>
+						 <option value="1">打开</option>
+						</select>
+					 </td>
+					 <td colspan=""><input type="button" value="应用" onclick="setImage()"/></td>							 		
+				  </tr>
+				   
+				</table>
+				</div>
+			</fieldset>
+
+		<!--end-->
+		
+	</div>
+
+	</div>
+</div>
+</body>
+</html>

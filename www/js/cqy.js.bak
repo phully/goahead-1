@@ -1,0 +1,651 @@
+
+
+
+
+
+var G = {
+	single:{
+		1:{"1080p":30},
+		2:{"1080p":15},
+		3:{"720p":30},
+		4:{"1440*1080p":30},
+		5:{"1600*1200p":30},
+		6:{"2048*1536p":15},
+		7:{"720p":30}
+	},
+	dual:{
+		1:{
+			"1080p":30,
+			"480p":2
+		},
+		2:{
+			"1080p":28,
+			"800*600p":28
+		},
+		3:{
+			"1080p":24,
+			"720p":24
+		},
+		4:{
+			"1080p":15,
+			"1080p":15
+		},
+		5:{
+			"1080p":15,
+			"720p":30
+		},
+		6:{
+			"720p":60,
+			"480p":30
+		},
+		7:{
+			"720p":60,
+			"CIF":60
+		},
+		8:{
+			"720p":30,
+			"720p":30
+		},
+		9:{
+			"720p":30,
+			"CIF":30
+		},
+		10:{
+			"480p":30,
+			"480p":30
+		},
+		11:{
+			"2048*1536p":15,
+			"576p":15
+		},
+		12:{
+			"2560*1440p":15,
+			"480p":15
+		},
+		13:{
+			"2560*1440p":15,
+			"720p":15
+		},
+		14:{
+			"2592*1944p":15,
+			"576p":12	
+		}
+	},
+	Triple:
+	{
+	1:{
+		"1080p":30,
+		"CIF":30,
+		"CIF":30
+		},
+	2:{
+	  "1080p":30,
+	  "CIF":30,
+	  "CIF":30
+	  },
+  3:{
+		"1080p":28,
+		"480":28,
+		"CIF":28
+		},
+	4:{
+	  "1080p":20,
+	  "720p":20,
+	  "480p":20
+	  }	,
+	dl_5:{
+		"720p":30,
+		"720p":30,
+		"480p":30
+		},
+	6:{
+	  "720p":25,
+	  "720p":25,
+	  "720p":25
+	  }	    
+	}
+};
+
+//alert(G.Triple.dl_5[0]);
+
+$(document).ready(function()
+ { 
+	 for(var a in G.dual)
+	 {
+		 for(var b in G.dual[a])
+		 {
+			 //alert(G.dual[a][b]);
+		 }
+	 }
+	 for(var a in G.Triple)
+	 {
+	 	 for(var b in G.Triple[a])
+	 	 {
+	 	 	 //alert(G.Triple[a][b]);
+	 	 }
+	 }
+ }
+)
+
+/*
+var UserList = [ {"UserID":11, "Name":{"p1080":20,"LastName":"Zhu"}, "Email":"zhuleipro¡òhotmail.com"},
+                 {"UserID":12, "Name":{"FirstName":"Jeffrey","LastName":"Richter"}, "Email":"xxx¡òxxx.com"}, 
+                 {"UserID":13, "Name":{"FirstName":"Scott","LastName":"Gu"}, "Email":"xxx2¡òxxx2.com"} ]; 
+                 //alert(UserList[0].Name.p1080);
+*/
+//alert(G.single[0]);
+//var EncodeBook=[{"one":{"1080p":20,"p720":"p28"}}];
+//alert(EncodeBook[0].one);
+
+
+function check_rate_time() 
+	{		
+		var exp=/^(([1-9]|([1-9]\d)|(1\d\d)|(2([0-4]\d|5[0-5]))))$/; 
+		obj=document.getElementById("frame_rate_time1").value 
+		var reg1 = obj.match(exp); 
+		obj=document.getElementById("frame_rate_time2").value 
+		var reg2 = obj.match(exp); 
+		obj=document.getElementById("frame_rate_time3").value 
+		var reg3 = obj.match(exp); 
+		obj=document.getElementById("frame_rate_time4").value 
+		var reg4 = obj.match(exp); 
+		if(reg1==null){
+			alert("ÊäÈëµÄµÚÒ»¸öIÖ¡¼ä¸ô²»ºÏ·¨,(1-255)");
+			return false;
+		}
+		else if(reg2==null)
+		{
+			alert("ÊäÈëµÄµÚ¶þ¸öIÖ¡¼ä¸ô²»ºÏ·¨,(1-255)");
+			return false;
+		}
+		else if(reg3==null)
+		{
+			alert("ÊäÈëµÄµÚÈý¸öIÖ¡¼ä¸ô²»ºÏ·¨,(1-255)");
+			return false;
+		}
+		else if(reg4==null)
+		{
+			alert("ÊäÈëµÄµÚËÄ¸öIÖ¡¼ä¸ô²»ºÏ·¨,(1-255)");
+			return false;
+		}
+		else{
+			//alert("ÐÞ¸Ä³É¹¦£¡");
+			return true;
+		}
+ }
+
+
+function checkmin_rate_time()        //¾ßÌå±àÂëÉèÖÃÅÐ¶ÏÖ¡ÂÊ
+	{		
+		var exp=/^(([1-9]|([1-9]\d)|(1\d\d)|(2([0-4]\d|5[0-5]))))$/; 
+		obj=document.getElementById("frame_rate_time").value 
+		var reg1 = obj.match(exp); 
+	  if(reg1==null){
+			alert("ÊäÈëµÄIÖ¡¼ä¸ô²»ºÏ·¨,(1-255)");
+			return false;
+		}else{
+			//alert("ÐÞ¸Ä³É¹¦£¡");
+			return true;
+		}
+	}
+
+function judge()
+	{
+		var stream_number_value=document.getElementById("stream_number").value;
+		if(stream_number_value==0)
+		{
+			
+		  $('#stream_judge2').css("display","none");
+		  $('#stream_judge3').css("display","none");
+		  $('#stream_judge4').css("display","none");
+	  }
+		if(stream_number_value==1)
+		{
+			
+		  $('#stream_judge2').css("display","");
+		  $('#stream_judge3').css("display","none");
+		  $('#stream_judge4').css("display","none");
+	  }
+	    
+	  if(stream_number_value==2)
+		{
+			
+			$('#stream_judge2').css("display","");
+		  $('#stream_judge3').css("display","");
+		  $('#stream_judge4').css("display","none");
+	  }
+		
+		if(stream_number_value==3)
+		{
+			
+			$('#stream_judge2').css("display","");
+		  $('#stream_judge3').css("display","");
+		  $('#stream_judge4').css("display","");
+	  }
+	}
+	
+function encode_judge1()
+{
+		var stream_number_value=document.getElementById("encode_style1").value;
+		if(stream_number_value==0)
+		{
+			
+			$('#encode1_judge1').css("display","");
+			$('#encode1_judge2').css("display","none");
+	  }
+	  if(stream_number_value==1)
+		{
+			$('#encode1_judge1').css("display","none");
+			$('#encode1_judge2').css("display","");
+	  }
+}
+
+
+function encode_judge2()
+{
+		var stream_number_value=document.getElementById("encode_style2").value;
+		if(stream_number_value==0)
+		{
+			
+			$('#encode2_judge1').css("display","");
+			$('#encode2_judge2').css("display","none");
+	  }
+	  if(stream_number_value==1)
+		{
+			$('#encode2_judge1').css("display","none");
+			$('#encode2_judge2').css("display","");
+	  }
+}
+
+function encode_judge3()
+{
+		var stream_number_value=document.getElementById("encode_style3").value;
+		if(stream_number_value==0)
+		{
+			
+			$('#encode3_judge1').css("display","");
+			$('#encode3_judge2').css("display","none");
+	  }
+	  if(stream_number_value==1)
+		{
+			$('#encode3_judge1').css("display","none");
+			$('#encode3_judge2').css("display","");
+	  }
+}
+
+function encode_judge4()
+{
+		var stream_number_value=document.getElementById("encode_style4").value;
+		if(stream_number_value==0)
+		{
+			
+			$('#encode4_judge1').css("display","");
+			$('#encode4_judge2').css("display","none");
+	  }
+	  if(stream_number_value==1)
+		{
+			$('#encode4_judge1').css("display","none");
+			$('#encode4_judge2').css("display","");
+	  }
+}
+
+function checkquality() 
+	{		
+		var exp= /^(?:0|[1-9][0-9]?|100)$/; 
+		obj=document.getElementById("quality").value 
+		var reg1 = obj.match(exp); 
+		if(reg1==null){
+			alert("ÄúÊäÈëµÄÖÊÁ¿²ÎÊý²»¶Ôë(0-100)!");
+			return false;
+		}
+		else{
+			//alert("ÐÞ¸Ä³É¹¦£¡");
+			return true;
+		}
+	}
+
+
+function init()
+	{
+		getEncode();	
+	}
+
+
+function setinfo()
+	{
+		if(check_rate_time())
+		{
+		   setEncode();
+	  }
+	}
+
+function remove_option(minvalue,maxvalue,firstvalue)            //É¾³ýoptionÏÂµÄÔªËØ
+{
+	for(i=minvalue ; i<=maxvalue; i++)
+	{
+	  $('#frame_rate1 option:eq('+ firstvalue + ')').remove();
+  }
+}
+
+function remove_definition2(minvalue,maxvalue,firstvalue)            //¸ù¾ÝµÚÒ»¸öÆ¥ÅäµÚ¶þ¸öÇåÎú¶È
+{
+	for(i=minvalue ; i<=maxvalue; i++)
+	{
+	  $('#definition2 option:eq('+ firstvalue + ')').remove();         //´ÓµÚ firstvalue¿ªÊ¼ remov
+  }
+}
+
+function remove_option2(minvalue,maxvalue,firstvalue)            //¸ù¾ÝµÚÒ»¸öÆ¥ÅäµÚ¶þ¸öÖ¡ÂÊ
+{
+	for(i=minvalue ; i<=maxvalue; i++)
+	{
+	  $('#frame_rate2 option:eq('+ firstvalue + ')').remove();
+  }
+}
+	
+function remove_definition3(minvalue,maxvalue,firstvalue)            //¸ù¾ÝµÚÒ»¸öÆ¥ÅäµÚÈý¸öÇåÎú¶È
+{
+	for(i=minvalue ; i<=maxvalue; i++)
+	{
+	  $('#definition3 option:eq('+ firstvalue + ')').remove();         //´ÓµÚ firstvalue¿ªÊ¼ remov
+  }
+}
+
+function remove_option3(minvalue,maxvalue,firstvalue)            //¸ù¾ÝµÚÒ»¸öÆ¥ÅäµÚËÄ¸öÖ¡ÂÊ
+{
+	for(i=minvalue ; i<=maxvalue; i++)
+	{
+	  $('#frame_rate3 option:eq('+ firstvalue + ')').remove();
+  }
+}
+
+function remove_option4(minvalue,maxvalue,firstvalue)            //¸ù¾ÝµÚÒ»¸öÆ¥ÅäµÚËÄ¸öÖ¡ÂÊ
+{
+	for(i=minvalue ; i<=maxvalue; i++)
+	{
+	  $('#frame_rate4 option:eq('+ firstvalue + ')').remove();
+  }
+}
+	
+function remove_definition4(minvalue,maxvalue,firstvalue)            //¸ù¾ÝµÚÒ»¸öÆ¥ÅäµÚËÄ¸öÇåÎú¶È
+{
+	for(i=minvalue ; i<=maxvalue; i++)
+	{
+	  $('#definition4 option:eq('+ firstvalue + ')').remove();         //´ÓµÚ firstvalue¿ªÊ¼ remov
+  }
+}
+	
+function definition_judge()             //Æ¥ÅäÇåÎú¶È
+{
+	var stream_number_value=document.getElementById("stream_number").value;
+	if(stream_number_value==0)
+	{
+		select_option_judge1();
+	}
+	if(stream_number_value==1)
+	{
+		select_option_judge2();
+	}
+	if(stream_number_value==2)
+	{
+		select_option_judge3();
+	}
+	if(stream_number_value==3)
+	{
+		select_option_judge4();
+	}
+	
+}	
+	
+function select_option_judge1()           //Ò»Â·ÂëÁ÷µÄÇé¿öÏÂÆ¥ÅäÇåÎú¶ÈºÍÖ¡ÂÊ
+{
+	$("#frame_rate1").html(wkl_clone1.html());
+	//$("#frame_rate2").html(wkl_clone1.html());
+	var definition_value1=document.getElementById("definition1").value;
+	if(definition_value1==0)
+	{
+		remove_option(0,2,14);
+		$("#frame_rate1").get(0).selectedIndex=13;
+	}
+	if(definition_value1==1)
+	{
+		remove_option(0,2,14);
+		$("#frame_rate1").get(0).selectedIndex=13  ;              //ÉèÖÃ×îºóÒ»¸öÖ¡ÂÊÎªÄ¬ÈÏ
+	}
+	if(definition_value1==2)
+	{
+	  remove_option(0,4,21);
+	  
+	}
+	if(definition_value1==3)
+	{
+	  remove_option(0,0,16);
+	  $("#frame_rate1").get(0).selectedIndex=15   ;
+	}
+	if(definition_value1==4)
+	{
+	  remove_option(0,4,21);
+	}
+	if(definition_value1==5 || definition_value1==6  )
+	{
+	  remove_option(0,6,10);
+	  $("#frame_rate1").get(0).selectedIndex=9 ; 
+	}
+}
+
+function select_option_judge2()
+{
+	$("#frame_rate2").html(wkl_clone2.html());                  //¼ÓÔØµÚ¶þ¸öÖ¡ÂÊ
+	$("#definition2").html(wkl_definition2.html());             //ÖØÐÂ¼ÓÔØµÚ¶þ¸öÇåÎú¶È
+	select_option_judge1();
+	var definition_value1=document.getElementById("definition1").value;
+	var definition_value2=document.getElementById("definition2").value;
+	if(definition_value1==0)
+	{
+		remove_definition2(0,5,1);
+		remove_option2(0,4,21);
+	}
+	if(definition_value1==1)
+	{
+		remove_definition2(0,0,0);
+		remove_definition2(0,5,1);
+		$("#frame_rate2").get(0).selectedIndex=13
+	}
+	if(definition_value1==2)
+	{
+		remove_definition2(0,1,5);
+		remove_definition2(0,0,2);
+		remove_option2(0,4,21);
+	}
+	if(definition_value1==3)
+	{
+		remove_definition2(0,0,2);
+		remove_definition2(0,3,3);
+		remove_option2(0,2,14);
+		$("#frame_rate2").get(0).selectedIndex=13  ;  
+	}
+	if(definition_value1==5)
+	{
+		remove_definition2(0,0,0);
+		remove_definition2(0,5,1);
+     
+    $("#frame_rate1").html(wkl_clone1.html());                    //ÖØÐÂ¼ÓÔØµÚÒ»¸öÖ¡ÂÊ
+    remove_option(0,2,14);
+    remove_option2(0,2,14);
+		$("#frame_rate1").get(0).selectedIndex=13
+		$("#frame_rate2").get(0).selectedIndex=13
+	}
+	if(definition_value1==6)
+	{
+		remove_definition2(0,1,0);
+		remove_definition2(0,4,1);
+		remove_option2(0,4,21);
+	}
+	if(definition_value1==7)
+	{
+		remove_definition2(0,1,0);		
+		remove_definition2(0,6,1);
+		remove_option2(0,4,21);
+		
+	}
+}
+
+
+function select_option_judge3()
+{
+	select_option_judge2();
+	//$("#frame_rate3").html(wkl_clone2.html());                  //¼ÓÔØµÚÈý¸öÖ¡ÂÊ
+	$("#definition3").html(wkl_definition3.html());             //ÖØÐÂ¼ÓÔØµÚÈý¸öÇåÎú¶È
+	var definition_value1=document.getElementById("definition1").value;
+	if(definition_value1==1)
+	{
+		remove_definition3(0,0,0);
+		remove_definition3(0,5,1);		
+	}
+	if(definition_value1==3)
+	{
+		remove_definition2(0,1,0);		
+		remove_definition3(0,0,0);
+		remove_definition3(0,0,1);
+		remove_definition3(0,3,2);
+	}
+	if(definition_value1==5)
+	{
+		remove_definition3(0,0,2);
+		remove_definition3(0,0,3);
+		remove_definition3(0,1,4);
+	}
+	if(definition_value1==6)
+	{
+		$("#definition2").html(wkl_definition2.html()); 
+		remove_definition2(0,0,0); 
+		remove_definition2(0,5,1); 
+		remove_definition3(0,6,1); 
+	}
+}
+
+function select_option_judge4()
+{
+	select_option_judge3();
+	$("#definition4").html(wkl_definition4.html());           //ÖØÐÂ¼ÓÔØµÚËÄ¸öÇåÎú¶È
+	var definition_value1=document.getElementById("definition1").value;    
+	if(definition_value1==5)
+	{
+		$("#definition3").html(wkl_definition3.html());
+		remove_definition3(0,2,2); 
+		remove_definition3(0,1,3);
+		remove_definition4(0,3,1);
+		remove_definition4(0,1,2);
+	}
+	if(definition_value1==3)
+	{
+		$("#definition3").html(wkl_definition3.html()); 
+		remove_definition3(0,0,2); 
+		remove_definition3(0,3,3); 
+		remove_definition4(0,0,2); 
+		remove_definition4(0,3,3); 
+	}
+	if(definition_value1==1)
+	{
+		remove_definition4(0,0,0); 
+		remove_definition4(0,6,1); 
+	}
+	if(definition_value1==6)
+	{
+		$("#definition2").html(wkl_definition2.html()); 
+		$("#definition3").html(wkl_definition3.html()); 
+		remove_definition2(0,2,0);
+		remove_definition2(0,3,1);
+		remove_definition3(0,2,0);
+		remove_definition3(0,3,1);
+		remove_definition4(0,1,0);
+		remove_definition4(0,4,1);
+	}
+}
+
+
+function select_option1_judge()                     //µÚÒ»¸öÖ¡ÂÊÀ´ÅÐ¶ÏÏÂÃæµÄÇåÎú¶ÈºÍÏÂÃæµÄÖ¡ÂÊ
+{
+	var frame_rate_value1=document.getElementById("frame_rate1").value;
+	var definition_value1=document.getElementById("definition1").value;
+	var stream_number_value=document.getElementById("stream_number").value;
+	if(stream_number_value==1)
+	{
+		if(definition_value1==5)
+		{
+			
+			if(frame_rate_value1==11)
+			{
+			  $("#definition2").html(wkl_definition2.html());
+			  $("#frame_rate2").html(wkl_clone2.html());   
+				remove_definition2(0,2,0);
+				remove_definition2(0,3,1);
+				remove_option2(0,4,12);
+				$("#frame_rate2").get(0).selectedIndex=11  ;              //ÉèÖÃ×îºóÒ»¸öÖ¡ÂÊÎªÄ¬ÈÏ
+			}
+		  
+		  if(frame_rate_value1==13)
+			{
+				$("#definition2").html(wkl_definition2.html());
+			  $("#frame_rate2").html(wkl_clone2.html());   
+				remove_definition2(0,0,0);
+				remove_definition2(0,5,1);
+				remove_option2(0,2,14);
+				$("#frame_rate2").get(0).selectedIndex=13  ;  
+			}
+			if(frame_rate_value1==9)
+			{
+				$("#definition2").html(wkl_definition2.html());
+			  $("#frame_rate2").html(wkl_clone2.html());   
+				remove_definition2(0,2,0);
+				remove_definition2(0,0,1);
+				remove_definition2(0,1,2);
+				remove_option2(0,6,10);
+				$("#frame_rate2").get(0).selectedIndex=9  ;  
+			}
+		}
+		if(definition_value1==3)
+		{
+			if(frame_rate_value1==13)
+			{
+				$("#definition2").html(wkl_definition2.html());
+				$("#frame_rate2").html(wkl_clone2.html());   
+				remove_definition2(0,1,1);
+				remove_definition2(0,4,2);
+				remove_option2(0,2,14);
+				$("#frame_rate2").get(0).selectedIndex=13  ;  
+			}
+		}
+	}
+}
+
+
+
+function definition2_judge()                        //µÚ¶þ¸öÇåÎú¶ÈÀ´ÅÐ¶ÏÏÂÃæµÄÖ¡ÂÊ
+{
+	var stream_number_value=document.getElementById("stream_number").value;
+	var definition_value1=document.getElementById("definition1").value; 
+	var definition_value2=document.getElementById("definition2").value;
+	var frame_rate_value1=document.getElementById("frame_rate1").value; 
+	if(stream_number_value==2)
+	{
+		alert("asd");
+		if(definition_value1==5)
+		{
+			
+			if(definition_value2==3)
+			{
+				$("#frame_rate2").html(wkl_clone2.html());   
+				remove_option2(0,2,14);
+				$("#frame_rate2").get(0).selectedIndex=13  ;  
+			}
+			if(definition_value2==5)
+			{
+				$("#frame_rate2").html(wkl_clone2.html());   
+				remove_option2(0,6,10);
+				$("#frame_rate2").get(0).selectedIndex=9  ;  
+			}
+		}
+	
+	}
+}

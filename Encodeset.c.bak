@@ -1,0 +1,282 @@
+
+/*
+ * umui.c -- User Management GoForm Processing
+ *
+ * Copyright (c) GoAhead Software Inc., 1995-2000. All Rights Reserved.
+ *
+ * See the file "license.txt" for usage and redistribution license requirements
+ *
+ *	$Id: umui.c,v 1.2 2002/10/24 14:44:50 bporter Exp $
+ */
+
+/******************************** Description *********************************/
+
+/*
+ *	This module provides GoForm functions for User management
+ */
+
+/********************************* Includes ***********************************/
+
+
+
+#include <locale.h>
+#include <signal.h>
+#include	"wsIntrn.h"
+#include  "Encodeset.h"
+
+
+
+#define ENCODE_FILE   "/etc/ambaipcam/IPC_Q313/config/Encode.cfg"
+
+
+typedef struct encode_s
+{
+	char type[50];             //编码类型
+	int definition;            //清晰度
+	int frame_rate;            //帧率
+	int frame_rate_time;       //帧间隔
+	int code_rate_contral;     //码率控制
+	int code_rate;             //码率
+	int rotate;                //旋转方向
+	int quality;               //质量
+	int text_judge;            //
+}encode_t;
+
+encode_t encode_set[4];
+
+
+FILE *encodefp;
+
+
+
+
+/*********************************** Code *************************************/
+/*
+ *	Set up the User Management form handlers
+ */
+
+
+void readencode()                                                 //从二进制里读
+{
+	memset(&encode_set,0,sizeof(encode_t));
+  if((encodefp=fopen(ENCODE_FILE,"rb"))==NULL)
+	{
+		printf("can not open file \n");
+		return;
+	}
+	else
+	{	
+		fread(&encode_set,sizeof(encode_t)*4,1,encodefp);
+	}
+	fclose(encodefp);
+}
+
+void writeencode()
+{
+	if((encodefp=fopen(ENCODE_FILE,"wb"))==NULL)
+	{
+		printf("write can not open file\n");
+		return;
+	}
+	else
+	{
+		
+	fwrite(&encode_set,sizeof(encode_t)*4,1,encodefp);
+	
+  }
+  fclose(encodefp);
+}
+
+
+void formEncodeSet(webs_t wp, char_t *path, char_t *query)
+{	
+	
+	
+	char_t *pszOperate = NULL;
+  
+	static char_t *pszType  	 = NULL;
+	static char_t *pszDefinition	 	 = NULL;
+	static char_t *pszFram_rate = NULL;
+	static char_t *pszFram_rate_time 	 	 = NULL;
+	static char_t *pszCode_rate_contral  		 = NULL;
+	static char_t *pszCode_rate    = NULL;
+	static char_t *pszRotate = NULL;
+	static char_t *pszQuality  	 = NULL;
+	static char_t *text_judge  	 = NULL;
+	
+	pszOperate = websGetVar(wp, T("Operate"), T(""));
+	
+	printf("Encode: %s\n", pszOperate);
+  
+	readencode();
+	
+	if (0 == gstricmp(pszOperate, T("get"))) {
+		  
+			websWrite(wp, T("HTTP/1.0 200 OK\n"));
+			websWrite(wp, T("Server: %s\r\n"), WEBS_NAME);
+			websWrite(wp, T("Pragma: no-cache\n"));
+			websWrite(wp, T("Cache-control: no-cache\n"));
+			websWrite(wp, T("Content-Type: text/xml\n"));
+			websWrite(wp, T("\n"));
+			
+			websWrite(wp, T("<?xml version='1.0' encoding='UTF-8'?>"));
+			websWrite(wp, T("<Encode>"));
+			websWrite(wp, T("<type>%s</type>"), encode_set[0].type);
+			websWrite(wp, T("<definition>%d</definition>"), encode_set[0].definition);
+			websWrite(wp, T("<frame_rate>%d</frame_rate>"), encode_set[0].frame_rate);
+			websWrite(wp, T("<frame_rate_time>%d</frame_rate_time>"), encode_set[0].frame_rate_time);
+			websWrite(wp, T("<code_rate_contral>%d</code_rate_contral>"), encode_set[0].code_rate_contral);
+			websWrite(wp, T("<code_rate>%d</code_rate>"), encode_set[0].code_rate);
+			websWrite(wp, T("<rotate>%d</rotate>"), encode_set[0].rotate);
+			websWrite(wp, T("<quality>%d</quality>"), encode_set[0].quality);
+			websWrite(wp, T("</Encode>"));
+			websDone(wp, 200);
+	}
+	else if  (0 == gstricmp(pszOperate, T("get2")))
+	{
+	  printf("get2!\n");
+	
+		websWrite(wp, T("HTTP/1.0 200 OK\n"));
+		websWrite(wp, T("Server: %s\r\n"), WEBS_NAME);
+		websWrite(wp, T("Pragma: no-cache\n"));
+		websWrite(wp, T("Cache-control: no-cache\n"));
+		websWrite(wp, T("Content-Type: text/xml\n"));
+		websWrite(wp, T("\n"));
+		
+		websWrite(wp, T("<?xml version='1.0' encoding='UTF-8'?>"));
+		websWrite(wp, T("<Encode>"));
+		websWrite(wp, T("<type>%s</type>"), encode_set[1].type);
+		websWrite(wp, T("<definition>%d</definition>"), encode_set[1].definition);
+		websWrite(wp, T("<frame_rate>%d</frame_rate>"), encode_set[1].frame_rate);
+		websWrite(wp, T("<frame_rate_time>%d</frame_rate_time>"), encode_set[1].frame_rate_time);
+		websWrite(wp, T("<code_rate_contral>%d</code_rate_contral>"), encode_set[1].code_rate_contral);
+		websWrite(wp, T("<code_rate>%d</code_rate>"), encode_set[1].code_rate);
+		websWrite(wp, T("<rotate>%d</rotate>"), encode_set[1].rotate);
+		websWrite(wp, T("<quality>%d</quality>"), encode_set[1].quality);
+		websWrite(wp, T("</Encode>"));
+		websDone(wp, 200);
+	}
+	else if  (0 == gstricmp(pszOperate, T("get3")))
+	{
+	  printf("get3!\n");
+	
+		websWrite(wp, T("HTTP/1.0 200 OK\n"));
+		websWrite(wp, T("Server: %s\r\n"), WEBS_NAME);
+		websWrite(wp, T("Pragma: no-cache\n"));
+		websWrite(wp, T("Cache-control: no-cache\n"));
+		websWrite(wp, T("Content-Type: text/xml\n"));
+		websWrite(wp, T("\n"));
+		
+		websWrite(wp, T("<?xml version='1.0' encoding='UTF-8'?>"));
+		websWrite(wp, T("<Encode>"));
+		websWrite(wp, T("<type>%s</type>"), encode_set[2].type);
+		websWrite(wp, T("<definition>%d</definition>"), encode_set[2].definition);
+		websWrite(wp, T("<frame_rate>%d</frame_rate>"), encode_set[2].frame_rate);
+		websWrite(wp, T("<frame_rate_time>%d</frame_rate_time>"), encode_set[2].frame_rate_time);
+		websWrite(wp, T("<code_rate_contral>%d</code_rate_contral>"), encode_set[2].code_rate_contral);
+		websWrite(wp, T("<code_rate>%d</code_rate>"), encode_set[2].code_rate);
+		websWrite(wp, T("<rotate>%d</rotate>"), encode_set[2].rotate);
+		websWrite(wp, T("<quality>%d</quality>"), encode_set[2].quality);
+		websWrite(wp, T("</Encode>"));
+		websDone(wp, 200);
+	}
+	else if  (0 == gstricmp(pszOperate, T("get4")))
+	{
+	  printf("get4!\n");
+	
+		websWrite(wp, T("HTTP/1.0 200 OK\n"));
+		websWrite(wp, T("Server: %s\r\n"), WEBS_NAME);
+		websWrite(wp, T("Pragma: no-cache\n"));
+		websWrite(wp, T("Cache-control: no-cache\n"));
+		websWrite(wp, T("Content-Type: text/xml\n"));
+		websWrite(wp, T("\n"));
+		
+		websWrite(wp, T("<?xml version='1.0' encoding='UTF-8'?>"));
+		websWrite(wp, T("<Encode>"));
+		websWrite(wp, T("<type>%s</type>"), encode_set[3].type);
+		websWrite(wp, T("<definition>%d</definition>"), encode_set[3].definition);
+		websWrite(wp, T("<frame_rate>%d</frame_rate>"), encode_set[3].frame_rate);
+		websWrite(wp, T("<frame_rate_time>%d</frame_rate_time>"), encode_set[3].frame_rate_time);
+		websWrite(wp, T("<code_rate_contral>%d</code_rate_contral>"), encode_set[3].code_rate_contral);
+		websWrite(wp, T("<code_rate>%d</code_rate>"), encode_set[3].code_rate);
+		websWrite(wp, T("<rotate>%d</rotate>"), encode_set[3].rotate);
+		websWrite(wp, T("<quality>%d</quality>"), encode_set[3].quality);
+		websWrite(wp, T("</Encode>"));
+		websDone(wp, 200);
+	}
+	else if (0 == gstricmp(pszOperate, T("set"))) {
+
+    readencode();
+		pszType     	= websGetVar(wp, T("type"), T(""));
+		pszDefinition	   		= websGetVar(wp, T("definition"), T(""));
+		pszFram_rate 	= websGetVar(wp, T("frame_rate"), T(""));
+		pszFram_rate_time    		= websGetVar(wp, T("frame_rate_time"), T(""));
+		pszCode_rate_contral  		= websGetVar(wp, T("code_rate_contral"), T(""));
+		pszCode_rate   	= websGetVar(wp, T("code_rate"), T(""));
+		pszRotate  	= websGetVar(wp, T("rotate"), T(""));
+		pszQuality  	= websGetVar(wp, T("quality"), T(""));
+		text_judge  	= websGetVar(wp, T("text_judge"), T(""));
+		
+		if(0 == gstricmp(text_judge, T("1")))
+		{	
+			printf("set1:\n");
+			strcpy(encode_set[0].type,pszType);
+			encode_set[0].definition=gatoi(pszDefinition);
+			encode_set[0].frame_rate=gatoi(pszFram_rate);
+			encode_set[0].frame_rate_time=gatoi(pszFram_rate_time);
+			encode_set[0].code_rate_contral=gatoi(pszCode_rate_contral);
+			encode_set[0].code_rate=gatoi(pszCode_rate);
+			encode_set[0].rotate=gatoi(pszRotate);
+			encode_set[0].quality=gatoi(pszQuality);
+			printf("text_judge:%s\n",text_judge);	
+			printf("type:%s\n",pszType);
+			printf("definition1:%s\n",pszDefinition);
+			printf("pszFram_rate:%s\n",pszFram_rate);
+			printf("pszFram_rate_time:%s\n",pszFram_rate_time);
+			printf("pszCode_rate_contral:%s\n",pszCode_rate_contral);
+			printf("pszCode_rate:%s\n",pszCode_rate);
+			printf("pszRotate:%s\n",pszRotate);
+			printf("pszQuality:%s\n",pszQuality);			
+		}	
+		if(0 == gstricmp(text_judge, T("2")))
+		{
+			printf("set2:\n");
+			strcpy(encode_set[1].type,pszType);
+			encode_set[1].definition=gatoi(pszDefinition);
+			encode_set[1].frame_rate=gatoi(pszFram_rate);
+			encode_set[1].frame_rate_time=gatoi(pszFram_rate_time);
+			encode_set[1].code_rate_contral=gatoi(pszCode_rate_contral);
+			encode_set[1].code_rate=gatoi(pszCode_rate);
+			encode_set[1].rotate=gatoi(pszRotate);
+			encode_set[1].quality=gatoi(pszQuality);
+		}
+		if(0 == gstricmp(text_judge, T("3")))
+		{
+			printf("set3:\n");
+			strcpy(encode_set[2].type,pszType);
+			encode_set[2].definition=gatoi(pszDefinition);
+			encode_set[2].frame_rate=gatoi(pszFram_rate);
+			encode_set[2].frame_rate_time=gatoi(pszFram_rate_time);
+			encode_set[2].code_rate_contral=gatoi(pszCode_rate_contral);
+			encode_set[2].code_rate=gatoi(pszCode_rate);
+			encode_set[2].rotate=gatoi(pszRotate);
+			encode_set[2].quality=gatoi(pszQuality);
+		}
+		if(0 == gstricmp(text_judge, T("4")))
+		{
+			printf("set4:\n");
+			strcpy(encode_set[3].type,pszType);
+			encode_set[3].definition=gatoi(pszDefinition);
+			encode_set[3].frame_rate=gatoi(pszFram_rate);
+			encode_set[3].frame_rate_time=gatoi(pszFram_rate_time);
+			encode_set[3].code_rate_contral=gatoi(pszCode_rate_contral);
+			encode_set[3].code_rate=gatoi(pszCode_rate);
+			encode_set[3].rotate=gatoi(pszRotate);
+			encode_set[3].quality=gatoi(pszQuality);
+		}
+		writeencode();
+		
+		websWrite(wp,T("0"));	
+		websDone(wp, 200);
+	}
+}
